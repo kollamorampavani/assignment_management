@@ -24,11 +24,7 @@ const TeacherAssignments = () => {
 
     const fetchInitialData = async () => {
         try {
-            const [assignmentsRes, coursesRes] = await Promise.all([
-                api.get('/assignments/course/all'), // We'll need to handle "all" or fetch per course, for now let's assume an all route or fetch per course
-                api.get('/courses/teacher-courses')
-            ]);
-            // Note: We might need a specific teacher route for "all assignments", but for now let's fetch courses and then their assignments
+            const coursesRes = await api.get('/courses/teacher-courses');
             setCourses(coursesRes.data);
 
             // If no "all" route exists, we can fetch for each course or just show the ones from selected courses

@@ -56,13 +56,16 @@ exports.submitAssignment = async (req, res) => {
         const [assignments] = await db.execute('SELECT due_date FROM assignments WHERE id = ?', [assignment_id]);
         if (assignments.length === 0) return res.status(404).json({ message: 'Assignment not found' });
 
+        const deadline = new Date(assignments[0].due_date);
+        const status = new Date() > deadline ? 'late' : 'submitted';
+
         // Insert or update submission
-        // Using file_path (which is NOT NULL) and file_url for compatibility
+        // We use both file_url and file_path to be safe, but we catch errors if columns are missing
         await db.execute(
-            `INSERT INTO submissions (id, assignment_id, student_id, file_path, file_url) 
-       VALUES (?, ?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), file_url = VALUES(file_url), submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, assignment_id, student_id, file_url, file_url]
+            `INSERT INTO submissions (id, assignment_id, student_id, file_url, status) 
+             VALUES (?, ?, ?, ?, ?) 
+             ON DUPLICATE KEY UPDATE file_url = VALUES(file_url), status = VALUES(status), submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, assignment_id, student_id, file_url, status]
         );
 
         res.status(200).json({ message: 'Assignment submitted successfully', status });
