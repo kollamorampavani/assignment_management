@@ -95,11 +95,12 @@ exports.getSubmissions = async (req, res) => {
 // Grade a submission (Teacher only)
 exports.gradeSubmission = async (req, res) => {
     try {
-        const { submission_id, grade, feedback } = req.body;
+        const { submission_id, grade, marks, feedback } = req.body;
+        const finalGrade = grade !== undefined ? grade : marks;
 
         await db.execute(
             `UPDATE submissions SET grade = ?, feedback = ? WHERE id = ?`,
-            [grade, feedback, submission_id]
+            [finalGrade, feedback, submission_id]
         );
 
         res.json({ message: 'Submission graded successfully' });
