@@ -12,12 +12,12 @@ exports.createCourse = async (req, res) => {
         }
 
         // Generate a unique 6-character alphanumeric join code
-        const join_code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const enrollment_key = Math.random().toString(36).substring(2, 8).toUpperCase();
         const courseId = crypto.randomUUID();
 
         await db.execute(
-            'INSERT INTO courses (id, name, description, teacher_id, join_code) VALUES (?, ?, ?, ?, ?)',
-            [courseId, name, description, teacher_id, join_code]
+            'INSERT INTO courses (id, name, description, teacher_id, enrollment_key) VALUES (?, ?, ?, ?, ?)',
+            [courseId, name, description, teacher_id, enrollment_key]
         );
 
         res.status(201).json({
@@ -33,24 +33,24 @@ exports.createCourse = async (req, res) => {
 // Join a course using join code (Student only)
 exports.joinCourse = async (req, res) => {
     try {
-        const { join_code } = req.body;
+        const { enrollment_key } = req.body;
         const student_id = req.user.id;
 
-        if (!join_code) {
-            return res.status(400).json({ message: 'Join code is required' });
+        if (!enrollment_key) {
+            return res.status(400).json({ message: 'Enrollment key is required' });
         }
 
-        // Find course by join code
-        const [courses] = await db.execute('SELECT id FROM courses WHERE join_code = ?', [join_code]);
+        // Find course by enrollment key
+        const [courses] = await db.execute('SELECT id FROM courses WHERE enrollment_key = ?', [enrollment_key]);
         if (courses.length === 0) {
-            return res.status(404).json({ message: 'Invalid join code' });
+            return res.status(404).json({ message: 'Invalid enrollment key' });
         }
 
         const course_id = courses[0].id;
 
         // Check if already enrolled
         const [existing] = await db.execute(
-            'SELECT * FROM course_enrollments WHERE student_id = ? AND course_id = ?',
+            'SELECT * FROM enrollments WHERE student_id = ? AND course_id = ?',
             [student_id, course_id]
         );
 
@@ -59,10 +59,9 @@ exports.joinCourse = async (req, res) => {
         }
 
         // Enroll student
-        const enrollmentId = crypto.randomUUID();
         await db.execute(
-            'INSERT INTO course_enrollments (id, student_id, course_id) VALUES (?, ?, ?)',
-            [enrollmentId, student_id, course_id]
+            'INSERT INTO enrollments (student_id, course_id) VALUES (?, ?)',
+            [student_id, course_id]
         );
 
         res.status(200).json({ message: 'Joined course successfully' });
@@ -89,8 +88,8 @@ exports.getStudentCourses = async (req, res) => {
         const student_id = req.user.id;
         const [courses] = await db.execute(
             `SELECT c.* FROM courses c 
-       JOIN course_enrollments ce ON c.id = ce.course_id 
-       WHERE ce.student_id = ?`,
+        JOIN enrollments ce ON c.id = ce.course_id 
+        WHERE ce.student_id = ?`,
             [student_id]
         );
         res.json(courses);

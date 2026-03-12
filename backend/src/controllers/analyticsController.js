@@ -18,7 +18,7 @@ exports.getAssignmentAnalytics = async (req, res) => {
         const { course_id, max_marks } = assignmentInfo[0];
 
         const [enrollmentInfo] = await db.execute(
-            'SELECT COUNT(*) as total_students FROM course_enrollments WHERE course_id = ?',
+            'SELECT COUNT(*) as total_students FROM enrollments WHERE course_id = ?',
             [course_id]
         );
 
@@ -38,9 +38,8 @@ exports.getAssignmentAnalytics = async (req, res) => {
 
         // 3. Get Grading Stats (Average Marks)
         const [gradingStats] = await db.execute(
-            `SELECT AVG(marks) as avg_marks FROM grades g
-       JOIN submissions s ON g.submission_id = s.id
-       WHERE s.assignment_id = ?`,
+            `SELECT AVG(grade) as avg_marks FROM submissions
+             WHERE assignment_id = ? AND grade IS NOT NULL`,
             [assignment_id]
         );
 
@@ -72,7 +71,7 @@ exports.getTeacherDashboardStats = async (req, res) => {
             [teacher_id]
         );
         const [students] = await db.execute(
-            'SELECT COUNT(DISTINCT student_id) as count FROM course_enrollments ce JOIN courses c ON ce.course_id = c.id WHERE c.teacher_id = ?',
+            'SELECT COUNT(DISTINCT student_id) as count FROM enrollments ce JOIN courses c ON ce.course_id = c.id WHERE c.teacher_id = ?',
             [teacher_id]
         );
 
@@ -81,8 +80,7 @@ exports.getTeacherDashboardStats = async (req, res) => {
             `SELECT COUNT(*) as count FROM submissions s 
              JOIN assignments a ON s.assignment_id = a.id 
              JOIN courses c ON a.course_id = c.id 
-             LEFT JOIN grades g ON s.id = g.submission_id 
-             WHERE c.teacher_id = ? AND g.id IS NULL`,
+             WHERE c.teacher_id = ? AND s.grade IS NULL`,
             [teacher_id]
         );
 
@@ -103,12 +101,12 @@ exports.getStudentDashboardStats = async (req, res) => {
         const student_id = req.user.id;
 
         // 1. Enrolled Courses
-        const [courses] = await db.execute('SELECT COUNT(*) as count FROM course_enrollments WHERE student_id = ?', [student_id]);
+        const [courses] = await db.execute('SELECT COUNT(*) as count FROM enrollments WHERE student_id = ?', [student_id]);
 
         // 2. Total Assignments in enrolled courses
         const [totalAssignments] = await db.execute(
             `SELECT COUNT(*) as count FROM assignments a 
-             JOIN course_enrollments ce ON a.course_id = ce.course_id 
+             JOIN enrollments ce ON a.course_id = ce.course_id 
              WHERE ce.student_id = ?`,
             [student_id]
         );
@@ -121,18 +119,17 @@ exports.getStudentDashboardStats = async (req, res) => {
 
         // 4. Average Grade
         const [avgGrade] = await db.execute(
-            `SELECT AVG(marks) as avg FROM grades g 
-             JOIN submissions s ON g.submission_id = s.id 
-             WHERE s.student_id = ?`,
+            `SELECT AVG(grade) as avg FROM submissions 
+             WHERE student_id = ? AND grade IS NOT NULL`,
             [student_id]
         );
 
         // 5. Upcoming Assignments (not submitted and deadline not passed)
         const [upcoming] = await db.execute(
             `SELECT COUNT(*) as count FROM assignments a 
-             JOIN course_enrollments ce ON a.course_id = ce.course_id 
+             JOIN enrollments ce ON a.course_id = ce.course_id 
              LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = ? 
-             WHERE ce.student_id = ? AND s.id IS NULL AND a.deadline > NOW()`,
+             WHERE ce.student_id = ? AND s.id IS NULL AND a.due_date > NOW()`,
             [student_id, student_id]
         );
 
