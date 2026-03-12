@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { ClipboardList, Calendar, Target, BookOpen, Download, Upload, CheckCircle, Clock } from 'lucide-react';
+import { useSearch } from '../context/SearchContext';
+import {
+ClipboardList, Calendar, Target, BookOpen, Download, Upload, CheckCircle, Clock, Book } from 'lucide-react';
 
 const StudentAssignments = () => {
+    const { searchQuery } = useSearch();
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submittingId, setSubmittingId] = useState(null);
@@ -71,27 +74,32 @@ const StudentAssignments = () => {
         }
     };
 
+    const filteredAssignments = assignments.filter(assignment =>
+        assignment.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assignment.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="student-assignments-container">
-            <div className="page-header">
+            <header className="page-header">
                 <div>
                     <h1>Assignments</h1>
-                    <p className="text-muted">View tasks and submit your work</p>
+                    <p className="text-muted">Stay track of your upcoming and completed tasks</p>
                 </div>
-            </div>
+            </header>
 
             {loading ? (
-                <p>Loading tasks...</p>
+                <p>Loading assignments...</p>
             ) : (
-                <div className="assignments-list">
-                    {assignments.length === 0 ? (
+                <div className="assignments-grid">
+                    {filteredAssignments.length === 0 ? (
                         <div className="empty-state glass-card">
-                            <ClipboardList size={48} className="text-muted" />
-                            <h3>No assignments found</h3>
-                            <p>You'll see assignments here once your teachers post them.</p>
+                            <Book size={48} className="text-muted" />
+                            <h3>No results found</h3>
+                            <p>Try searching for something else.</p>
                         </div>
                     ) : (
-                        assignments.map((assignment) => (
+                        filteredAssignments.map((assignment) => (
                             <div key={assignment.id} className="glass-card assignment-card shadow-hover">
                                 <div className="assignment-main">
                                     <div className="assignment-header">

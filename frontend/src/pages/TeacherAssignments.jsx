@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Plus, ClipboardList, Calendar, Target, BookOpen, AlertCircle } from 'lucide-react';
+import { useSearch } from '../context/SearchContext';
+import {
+Plus, ClipboardList, Calendar, Target, BookOpen, AlertCircle } from 'lucide-react';
 
 const TeacherAssignments = () => {
     const navigate = useNavigate();
+    const { searchQuery } = useSearch();
     const [assignments, setAssignments] = useState([]);
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -69,6 +72,11 @@ const TeacherAssignments = () => {
         }
     };
 
+    const filteredAssignments = assignments.filter(assignment =>
+        assignment.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assignment.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="teacher-assignments-container">
             <div className="page-header">
@@ -86,14 +94,14 @@ const TeacherAssignments = () => {
                 <p>Loading assignments...</p>
             ) : (
                 <div className="assignments-list">
-                    {assignments.length === 0 ? (
+                    {filteredAssignments.length === 0 ? (
                         <div className="empty-state glass-card">
                             <ClipboardList size={48} className="text-muted" />
-                            <h3>No assignments created</h3>
-                            <p>Start by creating your first assignment in one of your courses.</p>
+                            <h3>No results found</h3>
+                            <p>Try searching for something else or create a new assignment.</p>
                         </div>
                     ) : (
-                        assignments.map((assignment) => (
+                        filteredAssignments.map((assignment) => (
                             <div key={assignment.id} className="glass-card assignment-card">
                                 <div className="assignment-info">
                                     <div className="course-tag">

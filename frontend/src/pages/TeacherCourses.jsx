@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useSearch } from '../context/SearchContext';
 import { Plus, Book, Copy, Check, Users } from 'lucide-react';
 
 const TeacherCourses = () => {
+    const { searchQuery } = useSearch();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -42,6 +44,11 @@ const TeacherCourses = () => {
         setTimeout(() => setCopiedCode(null), 2000);
     };
 
+    const filteredCourses = courses.filter(course => 
+        course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        course.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="teacher-courses-container">
             <div className="page-header">
@@ -59,14 +66,14 @@ const TeacherCourses = () => {
                 <p>Loading courses...</p>
             ) : (
                 <div className="courses-grid">
-                    {courses.length === 0 ? (
+                    {filteredCourses.length === 0 ? (
                         <div className="empty-state glass-card">
                             <Book size={48} className="text-muted" />
-                            <h3>No courses yet</h3>
-                            <p>Create your first course to start managing assignments.</p>
+                            <h3>No results found</h3>
+                            <p>Try searching for something else or create a new course.</p>
                         </div>
                     ) : (
-                        courses.map((course) => (
+                        filteredCourses.map((course) => (
                             <div key={course.id} className="glass-card course-card">
                                 <div className="course-card-header">
                                     <div className="course-icon">

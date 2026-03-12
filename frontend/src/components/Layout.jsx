@@ -1,8 +1,42 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import { Bell, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { useSearch } from '../context/SearchContext';
 
 const Layout = ({ children }) => {
+  const { searchQuery, setSearchQuery } = useSearch();
+  const [notifications, setNotifications] = React.useState([]);
+  const [showNotifications, setShowNotifications] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data);
+      setUnreadCount(res.data.filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      await api.put(`/notifications/read/${id}`);
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking as read:', err);
+    }
+  };
+
   return (
     <div className="layout-container">
       <Sidebar />
@@ -11,14 +45,46 @@ const Layout = ({ children }) => {
         <header className="topbar">
           <div className="search-bar">
             <Search size={18} className="search-icon" />
-            <input type="text" placeholder="Search for assignments, courses..." />
+            <input 
+              type="text" 
+              placeholder="Search for assignments, courses..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           <div className="topbar-actions">
-            <button className="notification-btn">
-              <Bell size={20} />
-              <span className="notification-badge"></span>
-            </button>
+            <div className="notification-wrapper">
+              <button className="notification-btn" onClick={() => setShowNotifications(!showNotifications)}>
+                <Bell size={20} />
+                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+              </button>
+
+              {showNotifications && (
+                <div className="notification-dropdown glass-card">
+                  <div className="dropdown-header">
+                    <h3>Notifications</h3>
+                    {unreadCount > 0 && <span className="unread-status">{unreadCount} new</span>}
+                  </div>
+                  <div className="notification-list">
+                    {notifications.length === 0 ? (
+                      <p className="empty-notif">No notifications yet</p>
+                    ) : (
+                      notifications.map(notif => (
+                        <div 
+                          key={notif.id} 
+                          className={`notification-item ${!notif.is_read ? 'unread' : ''}`}
+                          onClick={() => markAsRead(notif.id)}
+                        >
+                          <p>{notif.message}</p>
+                          <span className="notif-time">{new Date(notif.created_at).toLocaleDateString()}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -102,13 +168,94 @@ const Layout = ({ children }) => {
 
         .notification-badge {
           position: absolute;
-          top: 8px;
-          right: 8px;
-          width: 8px;
-          height: 8px;
+          top: -5px;
+          right: -5px;
           background: var(--danger);
-          border-radius: 50%;
+          color: white;
+          font-size: 0.7rem;
+          padding: 2px 6px;
+          border-radius: 10px;
           border: 2px solid var(--bg-card);
+        }
+
+        .notification-wrapper {
+          position: relative;
+        }
+
+        .notification-dropdown {
+          position: absolute;
+          top: calc(100% + 15px);
+          right: 0;
+          width: 350px;
+          max-height: 400px;
+          display: flex;
+          flex-direction: column;
+          z-index: 1000;
+          padding: 0;
+          overflow: hidden;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .dropdown-header {
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: rgba(255,255,255,0.03);
+        }
+
+        .dropdown-header h3 {
+          font-size: 1.1rem;
+          margin: 0;
+        }
+
+        .unread-status {
+          font-size: 0.75rem;
+          color: var(--primary);
+          background: rgba(99, 102, 241, 0.1);
+          padding: 2px 8px;
+          border-radius: 10px;
+          font-weight: 600;
+        }
+
+        .notification-list {
+          overflow-y: auto;
+        }
+
+        .notification-item {
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid var(--border);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .notification-item:hover {
+          background: rgba(255,255,255,0.05);
+        }
+
+        .notification-item.unread {
+          border-left: 3px solid var(--primary);
+          background: rgba(99, 102, 241, 0.03);
+        }
+
+        .notification-item p {
+          font-size: 0.95rem;
+          margin: 0 0 0.5rem 0;
+          line-height: 1.4;
+          color: #e2e8f0;
+        }
+
+        .notif-time {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        .empty-notif {
+          padding: 2rem;
+          text-align: center;
+          color: var(--text-muted);
+          font-size: 0.9rem;
         }
 
         .content-area {

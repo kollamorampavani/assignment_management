@@ -12,6 +12,7 @@ import StudentGrades from './pages/StudentGrades';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import Analytics from './pages/Analytics';
+import { SearchProvider } from './context/SearchContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, role }) => {
@@ -27,7 +28,8 @@ const ProtectedRoute = ({ children, role }) => {
 
 function App() {
   return (
-    <Router>
+    <SearchProvider>
+      <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
@@ -113,6 +115,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
+    </SearchProvider>
   );
 }
 

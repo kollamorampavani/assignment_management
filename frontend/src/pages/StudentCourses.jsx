@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useSearch } from '../context/SearchContext';
 import { Plus, Book, Search, User } from 'lucide-react';
 
 const StudentCourses = () => {
+    const { searchQuery } = useSearch();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -37,6 +39,11 @@ const StudentCourses = () => {
         }
     };
 
+    const filteredCourses = courses.filter(course => 
+        course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        course.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="student-courses-container">
             <div className="page-header">
@@ -54,14 +61,14 @@ const StudentCourses = () => {
                 <p>Loading courses...</p>
             ) : (
                 <div className="courses-grid">
-                    {courses.length === 0 ? (
+                    {filteredCourses.length === 0 ? (
                         <div className="empty-state glass-card">
                             <Book size={48} className="text-muted" />
-                            <h3>Not enrolled in any courses</h3>
-                            <p>Ask your teacher for a join code to get started.</p>
+                            <h3>No results found</h3>
+                            <p>Try searching for something else or join a new course.</p>
                         </div>
                     ) : (
-                        courses.map((course) => (
+                        filteredCourses.map((course) => (
                             <div key={course.id} className="glass-card course-card">
                                 <div className="course-card-header">
                                     <div className="course-icon">
