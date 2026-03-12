@@ -14,8 +14,8 @@ exports.createAssignment = async (req, res) => {
         }
 
         await db.execute(
-            'INSERT INTO assignments (id, course_id, title, description, due_date, max_marks, file_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [assignmentId, course_id, title, description, due_date, max_marks, file_url]
+            'INSERT INTO assignments (id, course_id, title, description, due_date, max_marks, file_url, file_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [assignmentId, course_id, title, description, due_date, max_marks, file_url, file_url]
         );
 
         res.status(201).json({ message: 'Assignment created successfully', id: assignmentId });
@@ -60,12 +60,12 @@ exports.submitAssignment = async (req, res) => {
         const status = new Date() > deadline ? 'late' : 'submitted';
 
         // Insert or update submission
-        // We use both file_url and file_path to be safe, but we catch errors if columns are missing
+        // Including both file_url and file_path for compatibility with different column names in DB
         await db.execute(
-            `INSERT INTO submissions (id, assignment_id, student_id, file_url, status) 
-             VALUES (?, ?, ?, ?, ?) 
-             ON DUPLICATE KEY UPDATE file_url = VALUES(file_url), status = VALUES(status), submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, assignment_id, student_id, file_url, status]
+            `INSERT INTO submissions (id, assignment_id, student_id, file_url, file_path, status) 
+             VALUES (?, ?, ?, ?, ?, ?) 
+             ON DUPLICATE KEY UPDATE file_url = VALUES(file_url), file_path = VALUES(file_path), status = VALUES(status), submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, assignment_id, student_id, file_url, file_url, status]
         );
 
         res.status(200).json({ message: 'Assignment submitted successfully', status });
