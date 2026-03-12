@@ -22,7 +22,7 @@ exports.createCourse = async (req, res) => {
 
         res.status(201).json({
             message: 'Course created successfully',
-            course: { id: courseId, name, join_code }
+            course: { id: courseId, name, enrollment_key }
         });
     } catch (error) {
         console.error('Create Course Error:', error);
@@ -75,7 +75,7 @@ exports.joinCourse = async (req, res) => {
 exports.getTeacherCourses = async (req, res) => {
     try {
         const teacher_id = req.user.id;
-        const [courses] = await db.execute('SELECT * FROM courses WHERE teacher_id = ?', [teacher_id]);
+        const [courses] = await db.execute('SELECT *, enrollment_key as join_code FROM courses WHERE teacher_id = ?', [teacher_id]);
         res.json(courses);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching courses' });
@@ -87,7 +87,7 @@ exports.getStudentCourses = async (req, res) => {
     try {
         const student_id = req.user.id;
         const [courses] = await db.execute(
-            `SELECT c.* FROM courses c 
+            `SELECT c.*, c.enrollment_key as join_code FROM courses c 
         JOIN enrollments ce ON c.id = ce.course_id 
         WHERE ce.student_id = ?`,
             [student_id]
