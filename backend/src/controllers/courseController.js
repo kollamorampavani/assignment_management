@@ -33,15 +33,18 @@ exports.createCourse = async (req, res) => {
 // Join a course using join code (Student only)
 exports.joinCourse = async (req, res) => {
     try {
-        const { enrollment_key } = req.body;
+        const { enrollment_key, join_code } = req.body;
         const student_id = req.user.id;
+        
+        // Handle both possible field names from frontend
+        const key = enrollment_key || join_code;
 
-        if (!enrollment_key) {
-            return res.status(400).json({ message: 'Enrollment key is required' });
+        if (!key) {
+            return res.status(400).json({ message: 'Enrollment key or join code is required' });
         }
 
         // Find course by enrollment key
-        const [courses] = await db.execute('SELECT id FROM courses WHERE enrollment_key = ?', [enrollment_key]);
+        const [courses] = await db.execute('SELECT id FROM courses WHERE enrollment_key = ?', [key]);
         if (courses.length === 0) {
             return res.status(404).json({ message: 'Invalid enrollment key' });
         }

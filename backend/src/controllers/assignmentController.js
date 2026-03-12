@@ -5,11 +5,12 @@ const crypto = require('crypto');
 exports.createAssignment = async (req, res) => {
     try {
         const { course_id, title, description, deadline, max_marks } = req.body;
+        const due_date = deadline; // Map frontend 'deadline' to database 'due_date'
         const assignmentId = crypto.randomUUID();
         const file_url = req.file ? `/uploads/${req.file.filename}` : null;
 
         if (!course_id || !title || !due_date || !max_marks) {
-            return res.status(400).json({ message: 'Title, due date, and max marks are required' });
+            return res.status(400).json({ message: 'Title, deadline, and max marks are required' });
         }
 
         await db.execute(
