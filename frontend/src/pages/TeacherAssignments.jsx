@@ -121,7 +121,7 @@ const TeacherAssignments = () => {
                                         <div className="meta-item">
                                             <AlertCircle size={16} style={{ color: 'var(--primary)' }} />
                                             <a
-                                                href={`http://localhost:5000${assignment.file_url}`}
+                                                href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${assignment.file_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 style={{ color: 'var(--primary)', textDecoration: 'none' }}

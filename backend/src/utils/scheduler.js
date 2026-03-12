@@ -9,19 +9,18 @@ const initScheduler = () => {
         console.log('⏰ Running Deadline Reminder Task...');
 
         try {
-            // Find assignments with deadline between CURRENT_TIMESTAMP and CURRENT_TIMESTAMP + 24 HOURS
-            // That haven't been notified yet (simplified logic: check if notification exists)
+            // Find assignments with due_date between CURRENT_TIMESTAMP and CURRENT_TIMESTAMP + 24 HOURS
             const [assignments] = await db.execute(`
-        SELECT a.id, a.title, a.deadline, a.course_id
-        FROM assignments a
-        WHERE a.deadline >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 23 HOUR)
-        AND a.deadline <= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)
-      `);
+                SELECT id, title, due_date, course_id
+                FROM assignments
+                WHERE due_date >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 23 HOUR)
+                AND due_date <= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)
+            `);
 
             for (const assignment of assignments) {
                 // Find students in this course
                 const [students] = await db.execute(
-                    'SELECT student_id FROM course_enrollments WHERE course_id = ?',
+                    'SELECT student_id FROM enrollments WHERE course_id = ?',
                     [assignment.course_id]
                 );
 
@@ -43,8 +42,8 @@ const initScheduler = () => {
 
                         if (existingNote.length === 0) {
                             await db.execute(
-                                'INSERT INTO notifications (id, user_id, message) VALUES (?, ?, ?)',
-                                [crypto.randomUUID(), student.student_id, message]
+                                'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+                                [student.student_id, message]
                             );
                             console.log(`🔔 Notification sent to student ${student.student_id} for ${assignment.title}`);
                         }

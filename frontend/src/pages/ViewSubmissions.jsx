@@ -168,7 +168,7 @@ const ViewSubmissions = () => {
                                             <td>{new Date(sub.submitted_at).toLocaleString()}</td>
                                             <td>
                                                 <a
-                                                    href={`http://localhost:5000${sub.file_url}`}
+                                                    href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${sub.file_url}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="file-link"

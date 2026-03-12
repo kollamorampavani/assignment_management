@@ -29,7 +29,7 @@ exports.getCourseAssignments = async (req, res) => {
     try {
         const { course_id } = req.params;
         const [assignments] = await db.execute(
-            'SELECT * FROM assignments WHERE course_id = ? ORDER BY due_date ASC',
+            'SELECT *, due_date as deadline FROM assignments WHERE course_id = ? ORDER BY due_date ASC',
             [course_id]
         );
         res.json(assignments);
@@ -56,11 +56,12 @@ exports.submitAssignment = async (req, res) => {
         if (assignments.length === 0) return res.status(404).json({ message: 'Assignment not found' });
 
         // Insert or update submission
+        // Using file_path (which is NOT NULL) and file_url for compatibility
         await db.execute(
-            `INSERT INTO submissions (id, assignment_id, student_id, file_url) 
-       VALUES (?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE file_url = VALUES(file_url), submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, assignment_id, student_id, file_url]
+            `INSERT INTO submissions (id, assignment_id, student_id, file_path, file_url) 
+       VALUES (?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), file_url = VALUES(file_url), submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, assignment_id, student_id, file_url, file_url]
         );
 
         res.status(200).json({ message: 'Assignment submitted successfully', status });
@@ -75,7 +76,7 @@ exports.getSubmissions = async (req, res) => {
     try {
         const { assignment_id } = req.params;
         const [submissions] = await db.execute(
-            `SELECT s.*, u.name as student_name 
+            `SELECT s.*, u.name as student_name, s.grade as marks 
        FROM submissions s 
        JOIN users u ON s.student_id = u.id 
        WHERE s.assignment_id = ?`,
@@ -111,7 +112,7 @@ exports.getStudentSubmissions = async (req, res) => {
         const student_id = req.user.id;
 
         const [submissions] = await db.execute(
-            `SELECT a.id as assignment_id, s.id as submission_id, s.file_url, s.submitted_at, s.grade, s.feedback 
+            `SELECT a.id as assignment_id, s.id as submission_id, s.file_url, s.submitted_at, s.grade as marks, s.feedback, a.due_date as deadline 
              FROM assignments a 
              LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = ? 
              WHERE a.course_id = ?`,
