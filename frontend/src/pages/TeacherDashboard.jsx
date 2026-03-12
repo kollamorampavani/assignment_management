@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
     Users,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 
 const TeacherDashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalCourses: 0,
         totalAssignments: 0,
@@ -85,9 +87,9 @@ const TeacherDashboard = () => {
                         </div>
                     </div>
                     <div className="quick-actions">
-                        <button className="action-btn">Create Course</button>
-                        <button className="action-btn">Post Assignment</button>
-                        <button className="action-btn">View Submissions</button>
+                        <button className="action-btn" onClick={() => navigate('/teacher-courses')}>Create Course</button>
+                        <button className="action-btn" onClick={() => navigate('/teacher-assignments')}>Post Assignment</button>
+                        <button className="action-btn" onClick={() => navigate('/view-submissions')}>View Submissions</button>
                     </div>
                 </section>
             </div>
