@@ -62,9 +62,10 @@ exports.joinCourse = async (req, res) => {
         }
 
         // Enroll student
+        const enrollmentId = crypto.randomUUID();
         await db.execute(
-            'INSERT INTO enrollments (student_id, course_id) VALUES (?, ?)',
-            [student_id, course_id]
+            'INSERT INTO enrollments (id, student_id, course_id) VALUES (?, ?, ?)',
+            [enrollmentId, student_id, course_id]
         );
 
         res.status(200).json({ message: 'Joined course successfully' });
