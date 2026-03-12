@@ -48,7 +48,7 @@ exports.submitAssignment = async (req, res) => {
             return res.status(400).json({ message: 'Please upload a file' });
         }
 
-        const file_path = `/uploads/${req.file.filename}`;
+        const file_url = `/uploads/${req.file.filename}`;
         const submissionId = crypto.randomUUID();
 
         // Check if the assignment exists and due_date
@@ -57,10 +57,10 @@ exports.submitAssignment = async (req, res) => {
 
         // Insert or update submission
         await db.execute(
-            `INSERT INTO submissions (id, assignment_id, student_id, file_path) 
+            `INSERT INTO submissions (id, assignment_id, student_id, file_url) 
        VALUES (?, ?, ?, ?) 
-       ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), submitted_at = CURRENT_TIMESTAMP`,
-            [submissionId, assignment_id, student_id, file_path]
+       ON DUPLICATE KEY UPDATE file_url = VALUES(file_url), submitted_at = CURRENT_TIMESTAMP`,
+            [submissionId, assignment_id, student_id, file_url]
         );
 
         res.status(200).json({ message: 'Assignment submitted successfully', status });
@@ -111,7 +111,7 @@ exports.getStudentSubmissions = async (req, res) => {
         const student_id = req.user.id;
 
         const [submissions] = await db.execute(
-            `SELECT a.id as assignment_id, s.id as submission_id, s.file_path, s.submitted_at, s.grade, s.feedback 
+            `SELECT a.id as assignment_id, s.id as submission_id, s.file_url, s.submitted_at, s.grade, s.feedback 
              FROM assignments a 
              LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = ? 
              WHERE a.course_id = ?`,
