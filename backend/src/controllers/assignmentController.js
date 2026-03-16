@@ -18,6 +18,20 @@ exports.createAssignment = async (req, res) => {
             [assignmentId, course_id, title, description, due_date, max_marks, file_url, file_url]
         );
 
+        // Notify enrolled students
+        const [students] = await db.execute('SELECT student_id FROM enrollments WHERE course_id = ?', [course_id]);
+        
+        if (students.length > 0) {
+            const message = `A new assignment '${title}' has been posted in your course!`;
+            for (const student of students) {
+                const notifId = crypto.randomUUID();
+                await db.execute(
+                    'INSERT INTO notifications (id, user_id, message) VALUES (?, ?, ?)',
+                    [notifId, student.student_id, message]
+                );
+            }
+        }
+
         res.status(201).json({ message: 'Assignment created successfully', id: assignmentId });
     } catch (error) {
         console.error('Create Assignment Error:', error);

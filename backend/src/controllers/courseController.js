@@ -20,6 +20,20 @@ exports.createCourse = async (req, res) => {
             [courseId, name, description, teacher_id, enrollment_key]
         );
 
+        // Notify all students about the new course
+        const [students] = await db.execute('SELECT id FROM users WHERE role = ?', ['student']);
+        
+        if (students.length > 0) {
+            const message = `A new course '${name}' has been created! Ask your teacher for the join code.`;
+            for (const student of students) {
+                const notifId = crypto.randomUUID();
+                await db.execute(
+                    'INSERT INTO notifications (id, user_id, message) VALUES (?, ?, ?)',
+                    [notifId, student.id, message]
+                );
+            }
+        }
+
         res.status(201).json({
             message: 'Course created successfully',
             course: { id: courseId, name, enrollment_key }

@@ -41,9 +41,10 @@ const initScheduler = () => {
                         );
 
                         if (existingNote.length === 0) {
+                            const notifId = crypto.randomUUID();
                             await db.execute(
-                                'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
-                                [student.student_id, message]
+                                'INSERT INTO notifications (id, user_id, message) VALUES (?, ?, ?)',
+                                [notifId, student.student_id, message]
                             );
                             console.log(`🔔 Notification sent to student ${student.student_id} for ${assignment.title}`);
                         }
