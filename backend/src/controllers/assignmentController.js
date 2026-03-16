@@ -14,8 +14,8 @@ exports.createAssignment = async (req, res) => {
         }
 
         await db.execute(
-            'INSERT INTO assignments (id, course_id, title, description, due_date, max_marks, file_url, file_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [assignmentId, course_id, title, description, due_date, max_marks, file_url, file_url]
+            'INSERT INTO assignments (id, course_id, title, description, due_date, max_marks, file_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [assignmentId, course_id, title, description, due_date, max_marks, file_url]
         );
 
         // Notify enrolled students
